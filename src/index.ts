@@ -5,7 +5,7 @@ import fetch, { RequestInit } from 'node-fetch';
 import FormData from 'form-data';
 import colors from 'colors/safe';
 import { parseCookie, parseProtocol, parseUUID, stringifyCookie } from './lib/parse';
-import { Events, User, RequestMethod, Server, Plan, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions, ServerProperty, Endpoints } from "./lib/types";
+import { Events, User, RequestMethod, Server, Plan, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions, ServerProperty, Endpoints, ServerManagerPermission, ServerManagerPermissions, getPermissionValues } from "./lib/types";
 
 dotenv.config();
 
@@ -499,8 +499,6 @@ class CubedCraft {
     post.append("token", editToken as string || "");
     post.append("edit-file-sub", "Submit");
 
-    console.log(post);
-
     const request = await this.request(this.getEndpoint('dashboard') + `/filemanager/?action=edit&medit=${path}/${name}&dir=${path}`, 'POST', {
       "Content-Type": "multipart/form-data; boundary=" + post.getBoundary(),
     }, post);
@@ -851,6 +849,95 @@ class CubedCraft {
     }
   }
 
+  async addManager(user: string) {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const post = new FormData();
+    post.append("token", this.token || "");
+    post.append("action", "user");
+    post.append("new_player", user);
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/managers", 'POST', {}, post);
+    const $ = cheerio.load(await request.text());
+
+    const errorMessage = $(".alert.bg-danger.text-white li").text();
+
+    if(errorMessage.includes("That user hasn't registered")) return new Error('That user has not registered');
+    if(errorMessage.includes("You have already added that user to your server")) return new Error('You have already added that user to your server');
+
+    this.event.emit("manager", {
+      action: "add",
+      user,
+    });
+    return {
+      user,
+    }
+  }
+
+  async removeManager(id: any) {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const manager = await this.getManager(id);
+    
+    if(manager instanceof Error) return new Error('Manager not found');
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/managers/?action=remove&pid=" + manager.pid, 'GET', {});
+
+    this.event.emit("manager", {
+      action: "remove",
+      id,
+    });
+    return {
+      id,
+    }
+  }
+
+  async getManagers() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/managers", 'GET', {});
+    const $ = cheerio.load(await request.text());
+
+    const managers: { name: string, pid: number }[] = [];
+
+    $("table.table tbody tr").each((i, el) => {
+      const row = $(el);
+      const name = $(el).find("td:nth-child(1)").text().trim();
+      const unfilteredPID = $(el).find("td:nth-child(2) a").attr("href");
+      const pid = parseInt(unfilteredPID?.split("&pid=")[1] as string);
+
+      managers.push({
+        name,
+        pid
+      });
+    });
+
+    return managers;
+  }
+
+  async getManager(id: any) {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const managerList = await this.getManagers();
+    let manager = Array.isArray(managerList) ? managerList.find((m) => m.pid === parseInt(id)) : null;
+    if(!manager) manager = Array.isArray(managerList) ? managerList.find((m) => m.name === id) : null;
+
+    if(!manager) return new Error('Manager not found');
+
+    return {
+      name: manager.name,
+      pid: manager.pid,
+    };
+  }
+
   private getEndpoint(endpoint: keyof Endpoints) {
     const endpoints: Endpoints = {
       login: 'https://playerservers.com/login',
@@ -865,4 +952,4 @@ class CubedCraft {
   }
 }
 
-exports.CubedCraft = CubedCraft;
+export default CubedCraft;
