@@ -608,29 +608,6 @@ class CubedCraft {
             });
         });
     }
-    setServerProperties(properties) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.cookie)
-                throw new Error('Not logged in');
-            if (!this.user.selected_server)
-                throw new Error('No server selected');
-            const refresh = yield this.request(this.getEndpoint('dashboard') + `?s=${(_a = this.user.selected_server) === null || _a === void 0 ? void 0 : _a.id}`, 'GET', {});
-            const post = new form_data_1.default();
-            post.append("token", this.token || "");
-            post.append("action", "properties");
-            for (const key in properties) {
-                if (Object.prototype.hasOwnProperty.call(properties, key)) {
-                }
-            }
-            console.log(post);
-            /// gibbiemonster was here
-            const request = yield this.request(this.getEndpoint('properties'), 'POST', {}, post);
-            return {
-                properties,
-            };
-        });
-    }
     getCommands() {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
@@ -792,6 +769,44 @@ class CubedCraft {
                     }))();
                 }
             });
+        });
+    }
+    generateFTPUser() {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.cookie)
+                return new Error('Not logged in');
+            if (!this.user.selected_server)
+                return new Error('No server selected');
+            const refresh = yield this.request(this.getEndpoint('dashboard') + `?s=${(_a = this.user.selected_server) === null || _a === void 0 ? void 0 : _a.id}`, 'GET', {});
+            const post = new form_data_1.default();
+            post.append("token", this.token || "");
+            const request = yield this.request(this.getEndpoint('dashboard') + "/ftp", 'POST', {}, post);
+            const $ = cheerio_1.default.load(yield request.text());
+            const boosterCheck = $("a[href='/account/plans/']").text();
+            if (boosterCheck.includes("You need at least"))
+                return new Error('You need at least 2 boosters to use this feature');
+            // this is the DUMBEST thing ever
+            // for context:
+            // host has inputHost id
+            // port has inputPort id
+            // username has inputHost id..
+            // password ALSO has inputHost id..
+            const wtf = $("input#inputHost");
+            const host = $("input#inputHost").val();
+            const port = parseInt($("input#inputPort").val());
+            const username = wtf[1].attribs.value;
+            const password = wtf[2].attribs.value;
+            this.event.emit("ftp", {
+                action: "generate",
+            });
+            return {
+                action: "generate",
+                host,
+                port,
+                username,
+                password,
+            };
         });
     }
     getEndpoint(endpoint) {

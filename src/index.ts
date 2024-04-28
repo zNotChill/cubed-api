@@ -810,6 +810,47 @@ class CubedCraft {
     });
   }
 
+  async generateFTPUser() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const post = new FormData();
+    post.append("token", this.token || "");
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/ftp", 'POST', {}, post);
+    const $ = cheerio.load(await request.text());
+
+    const boosterCheck = $("a[href='/account/plans/']").text();
+
+    if(boosterCheck.includes("You need at least")) return new Error('You need at least 2 boosters to use this feature');
+
+    // this is the DUMBEST thing ever
+    // for context:
+    // host has inputHost id
+    // port has inputPort id
+    // username has inputHost id..
+    // password ALSO has inputHost id..
+    const wtf = $("input#inputHost");
+
+    const host = $("input#inputHost").val();
+    const port = parseInt($("input#inputPort").val() as string);
+    const username = wtf[1].attribs.value;
+    const password = wtf[2].attribs.value;
+
+    this.event.emit("ftp", {
+      action: "generate",
+    });
+    return {
+      action: "generate",
+      host,
+      port,
+      username,
+      password,
+    }
+  }
+
   private getEndpoint(endpoint: keyof Endpoints) {
     const endpoints: Endpoints = {
       login: 'https://playerservers.com/login',
