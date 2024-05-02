@@ -9,7 +9,6 @@ const node_fetch_1 = __importDefault(require("node-fetch"));
 const form_data_1 = __importDefault(require("form-data"));
 const safe_1 = __importDefault(require("colors/safe"));
 const parse_1 = require("./lib/parse");
-const types_1 = require("./lib/types");
 dotenv_1.default.config();
 class EventEmitter {
     constructor() {
@@ -773,28 +772,6 @@ class CubedCraft {
             id,
         };
     }
-    async setManagerPermissions(id, permissions) {
-        if (!this.cookie)
-            return new Error('Not logged in');
-        if (!this.user.selected_server)
-            return new Error('No server selected');
-        const manager = await this.getManager(id);
-        if (manager instanceof Error)
-            return new Error('Manager not found');
-        const post = new form_data_1.default();
-        post.append("token", this.token || "");
-        permissions.forEach((permission) => {
-            const perm = types_1.ServerManagerPermissions[permission];
-            post.append(`permissions[${perm}]`, "1");
-        });
-        console.log(post);
-        const request = await this.request(this.getEndpoint("dashboard") + "/managers/?action=edit&pid=" + manager.pid, 'POST', {}, post);
-        this.event.emit("manager", {
-            action: "edit",
-            id,
-            permissions,
-        });
-    }
     async getManagers() {
         if (!this.cookie)
             return new Error('Not logged in');
@@ -831,6 +808,61 @@ class CubedCraft {
             name: manager.name,
             pid: manager.pid,
         };
+    }
+    async getMOTD() {
+        if (!this.cookie)
+            return new Error('Not logged in');
+        if (!this.user.selected_server)
+            return new Error('No server selected');
+        const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+        const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+        const $ = cheerio_1.default.load(await request.text());
+        const motd = $("input#server-motd").val();
+        return motd;
+    }
+    async getVersion() {
+        if (!this.cookie)
+            return new Error('Not logged in');
+        if (!this.user.selected_server)
+            return new Error('No server selected');
+        const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+        const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+        const $ = cheerio_1.default.load(await request.text());
+        const version = $("select#server-version").find("option:selected").val();
+        return version;
+    }
+    async getIcon() {
+        if (!this.cookie)
+            return new Error('Not logged in');
+        if (!this.user.selected_server)
+            return new Error('No server selected');
+        const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+        const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+        const $ = cheerio_1.default.load(await request.text());
+        const icon = $("select#server-icon").find("option:selected").val();
+        return icon;
+    }
+    async getVisibility() {
+        if (!this.cookie)
+            return new Error('Not logged in');
+        if (!this.user.selected_server)
+            return new Error('No server selected');
+        const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+        const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+        const $ = cheerio_1.default.load(await request.text());
+        const visibility = $("select#server-visibility").find("option:selected").val();
+        return visibility;
+    }
+    async getPermissions() {
+        if (!this.cookie)
+            return new Error('Not logged in');
+        if (!this.user.selected_server)
+            return new Error('No server selected');
+        const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+        const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+        const $ = cheerio_1.default.load(await request.text());
+        const permissions = $("select#who-can-start").find("option:selected").val();
+        return permissions;
     }
     getEndpoint(endpoint) {
         const endpoints = {

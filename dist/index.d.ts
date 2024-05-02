@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { Events, User, RequestMethod, Server, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions, ServerManagerPermission } from "./lib/types";
+import { Events, User, RequestMethod, Server, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions } from "./lib/types";
 declare class EventEmitter {
     private events;
     on(event: Events, listener: Function): void;
@@ -198,7 +198,6 @@ declare class CubedCraft {
     removeManager(id: any): Promise<Error | {
         id: any;
     }>;
-    setManagerPermissions(id: any, permissions: ServerManagerPermission[]): Promise<Error | undefined>;
     getManagers(): Promise<Error | {
         name: string;
         pid: number;
@@ -207,6 +206,11 @@ declare class CubedCraft {
         name: string;
         pid: number;
     }>;
+    getMOTD(): Promise<string | string[] | Error | undefined>;
+    getVersion(): Promise<string | string[] | Error | undefined>;
+    getIcon(): Promise<string | string[] | Error | undefined>;
+    getVisibility(): Promise<string | string[] | Error | undefined>;
+    getPermissions(): Promise<string | string[] | Error | undefined>;
     private getEndpoint;
 }
 export default CubedCraft;
