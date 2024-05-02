@@ -938,6 +938,76 @@ class CubedCraft {
     };
   }
 
+  async getMOTD() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+    const $ = cheerio.load(await request.text());
+
+    const motd = $("input#server-motd").val();
+
+    return motd;
+  }
+
+  async getVersion() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+    const $ = cheerio.load(await request.text());
+
+    const version = $("select#server-version").find("option:selected").val();
+
+    return version;
+  }
+
+  async getIcon() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+    const $ = cheerio.load(await request.text());
+
+    const icon = $("select#server-icon").find("option:selected").val();
+
+    return icon;
+  }
+
+  async getVisibility() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+    const $ = cheerio.load(await request.text());
+
+    const visibility = $("select#server-visibility").find("option:selected").val();
+
+    return visibility;
+  }
+
+  async getPermissions() {
+    if(!this.cookie) return new Error('Not logged in');
+    if(!this.user.selected_server) return new Error('No server selected');
+
+    const refresh = await this.request(this.getEndpoint('dashboard') + `?s=${this.user.selected_server?.id}`, 'GET', {});
+
+    const request = await this.request(this.getEndpoint('dashboard') + "/dashboard", 'GET', {});
+    const $ = cheerio.load(await request.text());
+
+    const permissions = $("select#who-can-start").find("option:selected").val();
+
+    return permissions;
+  }
+  
   private getEndpoint(endpoint: keyof Endpoints) {
     const endpoints: Endpoints = {
       login: 'https://playerservers.com/login',
@@ -950,6 +1020,7 @@ class CubedCraft {
 
     return endpoints[endpoint];
   }
+
 }
 
 export default CubedCraft;
