@@ -9,6 +9,7 @@ const node_fetch_1 = __importDefault(require("node-fetch"));
 const form_data_1 = __importDefault(require("form-data"));
 const safe_1 = __importDefault(require("colors/safe"));
 const parse_1 = require("./lib/parse");
+const types_1 = require("./lib/types");
 dotenv_1.default.config();
 class EventEmitter {
     constructor() {
@@ -39,12 +40,13 @@ class EventEmitter {
     }
 }
 class CubedCraft {
-    constructor() {
+    constructor(customAPI = types_1.CustomAPI.zNotChill) {
         this.cookie = null;
         this.token = null;
         this.user = {};
         this.verbose = false;
         this.event = new EventEmitter();
+        this.customAPI = customAPI;
     }
     /**
      *
@@ -121,17 +123,21 @@ class CubedCraft {
      * A "resource intensive" task depending on your internet speed
      * and the CubedCraft API response time
      * overall, not recommended to run occasionally
+     *
+     * Customizable however, and can be changed to whatever URL you want.
      */
     async getUserData(uuid = this.user.uuid) {
         if (!this.cookie)
             throw new Error('Not logged in');
-        const userAPI = (await this.request("https://api.znotchill.me/api/cubed/user/" + uuid, "GET", {}));
-        const warzone = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/warzone", "GET", {});
-        const tntwars = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/tntwars", "GET", {});
-        const xrun = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/xrun", "GET", {});
-        const bedwars = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/bedwars", "GET", {});
-        const arcade = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/arcade", "GET", {});
-        const kitpvp = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/kitpvp", "GET", {});
+        const baseURI = this.customAPI.baseURI;
+        const userURI = `${baseURI}/${this.customAPI.userEndpoint}/${uuid}`;
+        const userAPI = (await this.request(userURI, "GET", {}));
+        const warzone = await this.request(userURI + "/warzone", "GET", {});
+        const tntwars = await this.request(userURI + "/tntwars", "GET", {});
+        const xrun = await this.request(userURI + "/xrun", "GET", {});
+        const bedwars = await this.request(userURI + "/bedwars", "GET", {});
+        const arcade = await this.request(userURI + "/arcade", "GET", {});
+        const kitpvp = await this.request(userURI + "/kitpvp", "GET", {});
         let user = await userAPI.json();
         let wzJson = await warzone.json();
         let twJson = await tntwars.json();

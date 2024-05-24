@@ -1,7 +1,7 @@
 "use strict";
 // Request Attributes
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ServerManagerPermissions = exports.getPermissionValues = void 0;
+exports.CustomAPI = exports.ServerManagerPermissions = exports.getPermissionValues = void 0;
 function getPermissionValues(permissions) {
     return permissions.map(permission => ServerManagerPermissions[permission]);
 }
@@ -29,3 +29,14 @@ var ServerManagerPermissions;
     ServerManagerPermissions["VIEW_PLAYERS"] = "players.view";
     ServerManagerPermissions["EDIT_WEBSITE"] = "website.edit";
 })(ServerManagerPermissions || (exports.ServerManagerPermissions = ServerManagerPermissions = {}));
+class CustomAPI {
+}
+exports.CustomAPI = CustomAPI;
+CustomAPI.CubedCraft = {
+    baseURI: "https://api.playerservers.com",
+    userEndpoint: "player",
+};
+CustomAPI.zNotChill = {
+    baseURI: "https://api.znotchill.me",
+    userEndpoint: "api/cubed/user",
+};

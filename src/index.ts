@@ -5,7 +5,7 @@ import fetch, { RequestInit } from 'node-fetch';
 import FormData from 'form-data';
 import colors from 'colors/safe';
 import { parseCookie, parseProtocol, parseUUID, stringifyCookie } from './lib/parse';
-import { Events, User, RequestMethod, Server, Plan, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions, ServerProperty, Endpoints, ServerManagerPermission, ServerManagerPermissions, getPermissionValues } from "./lib/types";
+import { Events, User, RequestMethod, Server, Plan, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions, ServerProperty, Endpoints, ServerManagerPermission, ServerManagerPermissions, getPermissionValues, CustomAPI, CustomAPIInterface } from "./lib/types";
 
 dotenv.config();
 
@@ -46,14 +46,15 @@ class CubedCraft {
   public user: User;
   private verbose: boolean;
   public event: EventEmitter;
+  public customAPI: CustomAPIInterface;
 
-  constructor() {
+  constructor(customAPI: CustomAPIInterface = CustomAPI.zNotChill) {
     this.cookie = null;
     this.token = null;
     this.user = {} as User;
     this.verbose = false;
     this.event = new EventEmitter();
-
+    this.customAPI = customAPI;
   }
 
   /**
@@ -102,46 +103,46 @@ class CubedCraft {
   }) {
     this.verbose = verbose;
     if(this.cookie) return this.user;
-
+    
     const initialRequest = await this.request(this.getEndpoint('login'), 'GET', {});
-
+    
     const $ = cheerio.load(await initialRequest.text());
     const token = $('input[name="token"]').val();
     const cookie = parseCookie(initialRequest.headers.get('set-cookie') || '');
-
+    
     this.cookie = cookie.PHPSESSID;
     this.token = token?.toString();
-
+    
     const formdata = new URLSearchParams();
     formdata.append('username', username);
     formdata.append('password', password);
     formdata.append('token', this.token || '');
     
     const loginRequest = await this.request(this.getEndpoint("login"), "POST", {"Content-Type": "application/x-www-form-urlencoded"}, formdata.toString());
-
+    
     const loginResponse = await loginRequest.text();
     const $2 = cheerio.load(loginResponse);
     const $user = $2("#navbar .right.menu :nth-child(1)")
-      .text()
-      .split(" ")[0]
-      .replace(" ", "")
-      .trim();
-
+    .text()
+    .split(" ")[0]
+    .replace(" ", "")
+    .trim();
+    
     let $uuid = $2("#navbar .right.menu :nth-child(1) img.ui.avatar.image").attr("src")?.split("/")[4];
-
+    
     $uuid = parseUUID($uuid || '');
-
+    
     if(!$user) throw new Error('Failed to login');
-
+    
     this.user.username = $user;
     this.user.uuid = $uuid;
-
+    
     this.verboseLog("Logged in as " + $user);
-
+    
     this.event.emit("login", this.user);
     return this.user;
   }
-
+  
   /**
    * Returns your CubedCraft user data if logged in,
    * if not logged in, throws an error
@@ -149,17 +150,22 @@ class CubedCraft {
    * A "resource intensive" task depending on your internet speed
    * and the CubedCraft API response time
    * overall, not recommended to run occasionally
+   * 
+   * Customizable however, and can be changed to whatever URL you want.
    */
   async getUserData(uuid: string = this.user.uuid) {
     if(!this.cookie) throw new Error('Not logged in');
 
-    const userAPI = (await this.request("https://api.znotchill.me/api/cubed/user/" + uuid, "GET", {}));
-    const warzone = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/warzone", "GET", {});
-    const tntwars = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/tntwars", "GET", {});
-    const xrun = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/xrun", "GET", {});
-    const bedwars = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/bedwars", "GET", {});
-    const arcade = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/arcade", "GET", {});
-    const kitpvp = await this.request("https://api.znotchill.me/api/cubed/user/" + uuid + "/kitpvp", "GET", {});
+    const baseURI = this.customAPI.baseURI;
+    const userURI = `${baseURI}/${this.customAPI.userEndpoint}/${uuid}`
+    
+    const userAPI = (await this.request(userURI, "GET", {}));
+    const warzone = await this.request(userURI + "/warzone", "GET", {});
+    const tntwars = await this.request(userURI + "/tntwars", "GET", {});
+    const xrun = await this.request(userURI + "/xrun", "GET", {});
+    const bedwars = await this.request(userURI + "/bedwars", "GET", {});
+    const arcade = await this.request(userURI + "/arcade", "GET", {});
+    const kitpvp = await this.request(userURI + "/kitpvp", "GET", {});
     
     let user = await userAPI.json() as any;
     let wzJson = await warzone.json() as any;

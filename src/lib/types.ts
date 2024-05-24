@@ -251,3 +251,21 @@ export type ServerPropertyValueMap = {
 // Event Emitter
 
 export type Events = "login" | "motd" | "command" | "boostCommand" | "voteCommand" | "plugin" | "stop" | "file"
+
+// Custom APIs
+
+export interface CustomAPIInterface {
+  baseURI: string,
+  userEndpoint: string,
+}
+
+export class CustomAPI {
+  static readonly CubedCraft: CustomAPIInterface = {
+    baseURI: "https://api.playerservers.com",
+    userEndpoint: "player",
+  }
+  static readonly zNotChill: CustomAPIInterface = {
+    baseURI: "https://api.znotchill.me",
+    userEndpoint: "api/cubed/user",
+  }
+}

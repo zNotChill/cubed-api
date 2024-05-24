@@ -210,3 +210,11 @@ export type ServerPropertyValueMap = {
     [K in keyof ServerProperty]: ServerProperty[K]['value'];
 };
 export type Events = "login" | "motd" | "command" | "boostCommand" | "voteCommand" | "plugin" | "stop" | "file";
+export interface CustomAPIInterface {
+    baseURI: string;
+    userEndpoint: string;
+}
+export declare class CustomAPI {
+    static readonly CubedCraft: CustomAPIInterface;
+    static readonly zNotChill: CustomAPIInterface;
+}

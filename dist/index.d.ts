@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { Events, User, RequestMethod, Server, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions } from "./lib/types";
+import { Events, User, RequestMethod, Server, ServerIcon, ServerAttribute, ServerVersion, ServerStartPermissions, CustomAPIInterface } from "./lib/types";
 declare class EventEmitter {
     private events;
     on(event: Events, listener: Function): void;
@@ -12,7 +12,8 @@ declare class CubedCraft {
     user: User;
     private verbose;
     event: EventEmitter;
-    constructor();
+    customAPI: CustomAPIInterface;
+    constructor(customAPI?: CustomAPIInterface);
     /**
      *
      * @param url The URL to request
@@ -41,6 +42,8 @@ declare class CubedCraft {
      * A "resource intensive" task depending on your internet speed
      * and the CubedCraft API response time
      * overall, not recommended to run occasionally
+     *
+     * Customizable however, and can be changed to whatever URL you want.
      */
     getUserData(uuid?: string): Promise<User>;
     /**
